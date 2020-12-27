@@ -30,31 +30,26 @@ struct Component{
     vector<const Vertex *> vertices;
 };
 
-void lowDFS(const Vertex * v, int * parentTable, bool * visitedTab, int currentTime, int * lowTab, int * entryTimeTab){
+void lowDFS(const Vertex * v, Edge * comingTrough, bool * visitedTab, int currentTime, int * lowTab, int * entryTimeTab){
     visitedTab[v->id] = true;
+
     lowTab[v->id] = currentTime;
     entryTimeTab[v->id] = currentTime;
+
     for(auto e : v->edges){
-        const Vertex * n = e->v1 != v ? e->v1 : e->v2;
-        if(parentTable[n->id] != v->id){
-            if(visitedTab[n->id] == false){
-                parentTable[n->id] = v->id;
-                lowDFS(n, parentTable, visitedTab, ++currentTime, lowTab, entryTimeTab);
+        if(e != comingTrough) {
+            const Vertex * n = e->v1 != v ? e->v1 : e->v2;
+            if(visitedTab[n->id] != true){
+                lowDFS(n, e, visitedTab, ++currentTime, lowTab, entryTimeTab);
             }
-
-            int ltv = lowTab[v->id];
-            int ltn = lowTab[n->id];
-
-            int entryTimeV = entryTimeTab[v->id];
-            int entryTimeN = entryTimeTab[n->id];
-
-            if(ltn <= ltv){
+            if(lowTab[n->id] <= lowTab[v->id]){
                 lowTab[v->id] = lowTab[n->id];
             }else{
                 e->bridge = true;
             }
         }
     }
+
 }
 void detectBridges(vector<const Vertex *> vertices){
     bool visited[vertices.size()];
@@ -68,7 +63,7 @@ void detectBridges(vector<const Vertex *> vertices){
         parents[i] = -1;
     }
     vector<Edge *> bridges;
-    lowDFS(vertices[0], parents, visited, 0, low, entry);
+    lowDFS(vertices[0], NULL, visited, 0, low, entry);
     cout<<"";
 }
 void visitDFS(const Vertex * v, Graph * g, bool * visited){
@@ -151,7 +146,7 @@ int main() {
             separateComponents(v, components.back(), visited);
         }
     }
-    cout<<components.size();
+    cout<<components.size()<<"\n";
     for(auto e : edges){
         cout << (e->direction ? ">" : "<");
     }
