@@ -5,15 +5,19 @@ using namespace std;
 struct Vertex;
 
 struct Edge{
-    const Vertex * v1;
-    const Vertex * v2;
+    Vertex * v1;
+    Vertex * v2;
+    const int id;
     bool bridge = false;
     bool direction;//true for v1 to v2, false for v2 to v1
-    Edge(Vertex * v1, Vertex * v2): v1(v1), v2(v2){}
+    Edge(int id, Vertex * v1, Vertex * v2): id(id), v1(v1), v2(v2){}
 };
 
 struct Vertex{
     const int id;
+    bool visited = false;
+    int entryTime = -1;
+    int lowVal = -1;
     vector<Edge *> edges;
     Vertex(int id): id(id){}
 };
@@ -21,37 +25,40 @@ struct Vertex{
 struct Graph{
     const int id;
     Graph(int id): id(id){}
-    vector<const Vertex *> vertices;
+    vector<Vertex *> vertices;
 };
 
 struct Component{
     const int id;
     Component(int id): id(id){};
-    vector<const Vertex *> vertices;
+    vector<Vertex *> vertices;
 };
 
-void lowDFS(const Vertex * v, Edge * comingTrough, bool * visitedTab, int currentTime, int * lowTab, int * entryTimeTab){
-    visitedTab[v->id] = true;
-
-    lowTab[v->id] = currentTime;
-    entryTimeTab[v->id] = currentTime;
+void lowDFS(Vertex * v, Edge * comingThrough, int currentTime){
+    v->visited = true;
+    v->lowVal = currentTime;
+    v->entryTime = currentTime;
 
     for(auto e : v->edges){
-        if(e != comingTrough) {
-            const Vertex * n = e->v1 != v ? e->v1 : e->v2;
-            if(visitedTab[n->id] != true){
-                lowDFS(n, e, visitedTab, ++currentTime, lowTab, entryTimeTab);
+        if(e != comingThrough) {
+            Vertex * n = e->v1 != v ? e->v1 : e->v2;
+            if(n->visited != true){
+                lowDFS(n, e, ++currentTime);
             }
-            if(lowTab[n->id] <= lowTab[v->id]){
-                lowTab[v->id] = lowTab[n->id];
-            }else{
+            if(n->lowVal <= v->lowVal){
+                v->lowVal = n->lowVal;
+            }
+            if (v->entryTime < n->lowVal){
                 e->bridge = true;
+                e->direction = true;
             }
+
+            cout<<"";
         }
     }
 
 }
-void detectBridges(vector<const Vertex *> vertices){
+void detectBridges(vector<Vertex *> vertices){
     bool visited[vertices.size()];
     int entry[vertices.size()];
     int low[vertices.size()];
@@ -63,25 +70,25 @@ void detectBridges(vector<const Vertex *> vertices){
         parents[i] = -1;
     }
     vector<Edge *> bridges;
-    lowDFS(vertices[0], NULL, visited, 0, low, entry);
+    lowDFS(vertices[0], NULL, 0);
     cout<<"";
 }
-void visitDFS(const Vertex * v, Graph * g, bool * visited){
+void visitDFS(Vertex * v, Graph * g, bool * visited){
     visited[v->id] = true;
     g->vertices.push_back(v);
     for(Edge * e : v->edges){
-        const Vertex * n = e->v1 != v ? e->v1 : e->v2;
+        Vertex * n = e->v1 != v ? e->v1 : e->v2;
         if(visited[n->id] != true){
             visitDFS(n, g,  visited);
         }
     }
 }
 
-void separateComponents(const Vertex * v, Component * c, bool * visited){
+void separateComponents(Vertex * v, Component * c, bool * visited){
     visited[v->id] = true;
     c->vertices.push_back(v);
     for(Edge * e : v->edges){
-        const Vertex * n = e->v1 != v ? e->v1 : e->v2;
+        Vertex * n = e->v1 != v ? e->v1 : e->v2;
         if(visited[n->id] != true){
             if(!e->bridge) {
                 e->direction = e->v1 == v;
@@ -110,7 +117,7 @@ int main() {
         Vertex * v1 = vertices[id1];
         Vertex * v2 = vertices[id2];
 
-        Edge * e = new Edge(v1, v2);
+        Edge * e = new Edge(i, v1, v2);
         edges.push_back(e);
 
         v1->edges.push_back(e);
